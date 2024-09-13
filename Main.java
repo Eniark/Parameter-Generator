@@ -82,10 +82,8 @@ public class Main {
 	            String functionName = line[0];
 	            String parameters = line[1];
 	            System.out.println(functionName);
-	            System.out.println(parameters);
         		
 	            List<Parameter> parsedParameters = gson.fromJson(parameters, type);
-	            System.out.println(parsedParameters);
         		
 
 	            List<JsonObject> combinations = new ArrayList<>();

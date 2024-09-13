@@ -74,6 +74,13 @@ public class Parameter {
     }
     
     
+    public boolean isEmpty () {
+    	return this.key==null 
+				&& this.policy==null 
+					&& this.type==null;
+
+    }
+    
     public static List<Parameter> LinkedTreeMapToParameterType (List<Object> list) {
 
     	// Make this a pure function

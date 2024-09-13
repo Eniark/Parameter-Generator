@@ -12,45 +12,35 @@ public class Combinations {
 
 
     public static void generateCombinations(List<Parameter> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
+    	
         if (index == parameters.size() || parameters.isEmpty()) {
-            if (!current.entrySet().isEmpty()) {
-                result.add(current.deepCopy());
-            }
+            result.add(current.deepCopy());
             return;
         }
         
-        String type   = null;
-        String policy = null;
-        Boolean isRequired = false;
-        
-        try {
-        	Parameter parameter = parameters.get(index);
-        	type = parameter.getType();
-            isRequired = parameter.getRequired() == null ? false : parameter.getRequired();
-            policy = parameter.getPolicy();
+        Parameter parameter = parameters.get(index);
+    	
+        if (parameter.isEmpty()) {
+            result.add(current.deepCopy());
+            return;        	
+        }
 
-        }
-        catch (NullPointerException e) {
-        	System.out.println(String.format("Incorrect parameter:"));
-        	System.out.println(parameters.get(index));
-        	throw new IllegalArgumentException("The parameter is missing a part (key, type, possibleValues, etc.)");
-        	
-        }
+    	String type = parameter.getType();
+    	Boolean isRequired = parameter.getRequired() == null ? false : parameter.getRequired();
+        
+    	String policy = parameter.getPolicy()
+        						 .toLowerCase();
+
+
         if (type.equalsIgnoreCase("nestedjson")) {
         	NestedJsonCombinations.handleNestedJsonType(parameters, current, index, result);
 			return;
         }
-        policy = policy.toLowerCase();
+        
         switch (policy) {
-//            case "date":
-//                handleDateType(parameters, current, index, result);
-//                break;
             case "multivalue":
                 handleMultiValueType(parameters, current, index, result);
                 break;
-//            case "nestedjson":
-//                NestedJsonCombinations.handleNestedJsonType(parameters, current, index, result, policy);
-//                break;
             case "singlevalue":
                 handleSingleValueType(parameters, current, index, result);
                 break;
@@ -62,41 +52,6 @@ public class Combinations {
         }
     }
 
-//    private static void handleDateType(List<Map<String, Object>> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
-//    	Map<String, Object> parameter = parameters.get(index);
-//    	List<String> possibleValues = parameter.getPossibleValues();
-//        
-//        String startDateKey = null;
-//        String endDateKey = null;
-//        
-//        if (parameter.get("key") instanceof List) {
-//        	List<String> keys = (List<String>) parameter.getKey();
-//        	startDateKey = keys.get(0);
-//            endDateKey = keys.get(1);
-//            
-//            for (String dateFrom : possibleValues) {
-//                for (String dateTo : possibleValues) {
-//                    Date startDate = Configurations.DATE_PARSER.parse(dateFrom);
-//                    Date endDate = Configurations.DATE_PARSER.parse(dateTo);
-//
-//                    if (startDate.before(endDate)) {
-//
-//    		            	current.addProperty(startDateKey, dateFrom);
-//    		                current.addProperty(endDateKey, dateTo);
-//    		                generateCombinations(parameters, current, index + 1, result);
-//    		                current.remove(startDateKey);
-//    		                current.remove(endDateKey);
-//                        }
-//                    }
-//                }
-//        }
-//        else {
-//        	handleSingleValueType(parameters, current, index, result);
-//        }
-//        
-//    }
-//    
-//
     private static void handleMultiValueType(List<Parameter> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
         // Generates combinations for multi-valued parameters
     	Parameter parameter = parameters.get(index);
@@ -153,6 +108,10 @@ public class Combinations {
  					current.addProperty(key, (String) value);            		
             	}
             	
+            	else if (type.equalsIgnoreCase("boolean")) {
+ 					current.addProperty(key, (Boolean) value);            		
+            	}
+            	
                 generateCombinations(parameters, current, index + 1, result);
                 current.remove(key);
             } else {
@@ -180,41 +139,5 @@ public class Combinations {
     }
 
         
-        
-////        ======================
-////        Map<String, Object> parameter = parameters.get(index);
-////    	List<String> possibleValues = parameter.getPossibleValues();
-////        
-////        String startDateKey = null;
-////        String endDateKey = null;
-////        
-////        if (parameter.get("key") instanceof List) {
-////        	List<String> keys = (List<String>) parameter.getKey();
-////        	startDateKey = keys.get(0);
-////            endDateKey = keys.get(1);
-////            
-////            for (String dateFrom : possibleValues) {
-////                for (String dateTo : possibleValues) {
-////                    Date startDate = Configurations.DATE_PARSER.parse(dateFrom);
-////                    Date endDate = Configurations.DATE_PARSER.parse(dateTo);
-////
-////                    if (startDate.before(endDate)) {
-////
-////    		            	current.addProperty(startDateKey, dateFrom);
-////    		                current.addProperty(endDateKey, dateTo);
-////    		                generateCombinations(parameters, current, index + 1, result);
-////    		                current.remove(startDateKey);
-////    		                current.remove(endDateKey);
-////                        }
-////                    }
-////                }
-////        }
-////        else {
-////        	handleSingleValueType(parameters, current, index, result);
-////        }
-////        
-////    }
-//
-//    
 
 }

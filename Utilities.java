@@ -21,7 +21,7 @@ public class Utilities {
         if (Configurations.DEBUG==1) {
     	    
         	String RESOURCES_ROOT_PATH = "src/main/resources/";
-            fileReader = new FileReader(RESOURCES_ROOT_PATH + fileName);
+            fileReader = new FileReader(RESOURCES_ROOT_PATH + fileName + "." + Configurations.FILE_EXTENSION);
 //            File inputFile = new File(fileReader);
     	    
         }
@@ -32,7 +32,7 @@ public class Utilities {
     	    	throw new IOException(String.format("Directory for CSV files \"%s\" not found. Please put the input files in there.", Configurations.INPUTS_DIRECTORY));
     	    }
 
-    	    File inputFile = new File(inputsDir, fileName);
+    	    File inputFile = new File(inputsDir, fileName + "." + Configurations.FILE_EXTENSION);
           
           
     	    
@@ -62,16 +62,16 @@ public class Utilities {
     public static String writeCSV(String[] header, List<List<String>> combinations, String fileName, char delimiter) throws IOException {
     	System.out.print("Writing amount of rows: ");
     	System.out.println(combinations.size());
-    	if (combinations == null || combinations.isEmpty()) {
-            throw new IllegalArgumentException("The list of data is empty or null.");
-        }
+//    	if (combinations == null || combinations.isEmpty()) {
+//            throw new IllegalArgumentException("The list of data is empty or null.");
+//        }
     	
 	    File resultsDir = new File("../Parameter Generator/" + Configurations.RESULTS_DIRECTORY);
 	    if (!resultsDir.exists()) {
 	        resultsDir.mkdirs(); 
 	    }
 
-	    File outputFile = new File(resultsDir, fileName);
+	    File outputFile = new File(resultsDir, fileName + "." + Configurations.FILE_EXTENSION);
     	
         try (CSVWriter writer = (CSVWriter) new CSVWriterBuilder(new FileWriter(outputFile, false)) // false = overwrites resulting file
                 .withQuoteChar(CSVWriter.NO_QUOTE_CHARACTER)

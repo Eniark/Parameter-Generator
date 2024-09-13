@@ -25,43 +25,23 @@ public class NestedJsonCombinations {
             }
             return;
         }
+        Parameter parameter = parameters.get(index);
+    	
+        if (parameter.isEmpty()) {
+            result.add(current.deepCopy());
+            return;        	
+        }
         
-        String type   = null;
-        String policy = null;
-        Boolean isRequired = false;
+    	String type = parameter.getType();
+    	Boolean isRequired = parameter.getRequired() == null ? false : parameter.getRequired();
         
-        try {
+    	String policy = parameter.getPolicy()
+        						 .toLowerCase();
 
-        	Parameter parameter = parameters.get(index);
-        	
-
-        	type = parameter.getType();
-            isRequired = parameter.getRequired() == null ? false : parameter.getRequired();
-            policy = parameter.getPolicy();
-
-        }
-        catch (NullPointerException e) {
-        	System.out.println(String.format("Incorrect parameter:"));
-        	System.out.println(parameters.get(index));
-        	throw new IllegalArgumentException("The parameter is missing a part (key, type, possibleValues, etc.)");
-        	
-        }
-        if (type.equalsIgnoreCase("nestedjson")) {
-           NestedJsonCombinations.handleNestedJsonType(parameters, current, index, result);
-           return;
-        	
-        }
-        policy = policy.toLowerCase();
         switch (policy) {
-//            case "date":
-//                handleDateType(parameters, current, index, result);
-//                break;
             case "multivalue":
                 handleMultiValueType(parameters, current, index, result);
                 break;
-//            case "nestedjson":
-//                NestedJsonCombinations.handleNestedJsonType(parameters, current, index, result, policy);
-//                break;
             case "singlevalue":
                 handleSingleValueType(parameters, current, index, result);
                 break;
