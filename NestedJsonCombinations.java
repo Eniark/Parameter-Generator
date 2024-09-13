@@ -98,14 +98,9 @@ public class NestedJsonCombinations {
 	         			valueObject.addProperty("value", valueNumeric.intValue());
 	 				 }
 	        	}
-	        	else if (type.equalsIgnoreCase("string")) {
-	        		valueObject.addProperty("value", (String) value);  
-					resultType = "string";
-	        	}
-	    		
-	        	else if (type.equalsIgnoreCase("boolean")) {
-	        		valueObject.addProperty("value", (boolean) value);  
-					resultType = "boolean";
+	        	else if (Arrays.asList("string", "boolean").contains(type)) {
+	        		valueObject.addProperty("value", (String) value);
+					resultType = type.equalsIgnoreCase("string") ? "string" : "boolean";
 	        	}
 	    		
 	    		valueObject.addProperty("type", resultType);
@@ -185,11 +180,6 @@ public class NestedJsonCombinations {
         
     	Parameter parameter = parameters.get(index);
 		String key = (String) parameter.getKey();
-        
-//		GsonBuilder builder = new GsonBuilder();
-//        Gson gson = builder.setPrettyPrinting().create();
-//        Type type = new TypeToken<List<Parameter>>() {}.getType();
-//		gson.fromJson(parameter.getPossibleValues().toString(), type);
 		
 		List<Parameter> possibleValues = Parameter.LinkedTreeMapToParameterType(parameter.getPossibleValues());
         List<JsonObject> nestedJsonCombinations = new ArrayList<>();
@@ -332,19 +322,15 @@ public class NestedJsonCombinations {
     					resultType = "string";
     	        	}
     	    		
-    	        	else if (type.equalsIgnoreCase("boolean")) {
-    	        		valueObject.addProperty(key, (boolean) value);   // THIS BREAKS THE CODE
-    					resultType = "boolean";
-    	        	}
     	    		
 //    	    		if (operation!=null) {
 //                    	valueObject.addProperty("operation", operation);
 //                	}
     	    		
-    	    		valueObject.addProperty("type", resultType);
     	    		
                 	valueObject.add("value", combination);
-                	valueObject.addProperty("type", type);
+    	    		valueObject.addProperty("type", resultType);
+
 //                    current.add(key, valueObject);
 //                    generateCombinations(parameters, current, index + 1, result);
 //                    current.remove(key);
