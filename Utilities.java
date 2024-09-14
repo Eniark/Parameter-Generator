@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import java.io.Reader;
+
 import java.util.List;
 
 import com.opencsv.CSVParser;
@@ -15,27 +18,40 @@ import com.opencsv.CSVWriterBuilder;
 
 public class Utilities {
     public static CSVReader readCSV(String fileName, char delimiter) throws IOException {
-    	  
-//        String RESOURCES_ROOT_PATH = "src/main/resources/";
-//      FileReader fileReader = new FileReader(RESOURCES_ROOT_PATH + fileName);
+    	FileReader fileReader;
+        
+        if (Configurations.DEBUG==1) {
+    	    
+        	String RESOURCES_ROOT_PATH = "src/main/resources/";
+            fileReader = new FileReader(RESOURCES_ROOT_PATH + fileName + "." + Configurations.FILE_EXTENSION);
+//            File inputFile = new File(fileReader);
+    	    
+        }
+        
+        else {
+        	File inputsDir = new File("../Parameter Generator/" + Configurations.INPUTS_DIRECTORY);
+    	    if (!inputsDir.exists()) {
+    	    	throw new IOException(String.format("Directory for CSV files \"%s\" not found. Please put the input files in there.", Configurations.INPUTS_DIRECTORY));
+    	    }
 
-	    File inputsDir = new File("../Parameter Generator/" + Configurations.INPUTS_DIRECTORY);
-	    if (!inputsDir.exists()) {
-	    	throw new IOException(String.format("Directory for CSV files \"%s\" not found. Please put the input files in there.", Configurations.INPUTS_DIRECTORY));
-	    }
-
-	    File inputFile = new File(inputsDir, fileName);
-	    
-	    if (!inputFile.exists()) {
-	    	throw new IOException(String.format("File \"%s\" not found. Please put the input file in \"%s\" folder.", fileName, Configurations.INPUTS_DIRECTORY));
-	    }
-	    
-        FileReader fileReader = new FileReader(inputFile);
+    	    File inputFile = new File(inputsDir, fileName + "." + Configurations.FILE_EXTENSION);
+          
+          
+    	    
+    	    if (!inputFile.exists()) {
+    	    	throw new IOException(String.format("File \"%s\" not found. Please put the input file in \"%s\" folder.", fileName, Configurations.INPUTS_DIRECTORY));
+    	    }
+    	    
+            fileReader = new FileReader(inputFile);
+        }
+        
         CSVParser parser = new CSVParserBuilder()
             .withSeparator(delimiter)
             .build();
 
-        CSVReader reader = new CSVReaderBuilder(fileReader)
+
+		CSVReader reader = new CSVReaderBuilder(fileReader)
+
             .withCSVParser(parser)
             .build();
 
@@ -49,16 +65,17 @@ public class Utilities {
     public static String writeCSV(String[] header, List<List<String>> combinations, String fileName, char delimiter) throws IOException {
     	System.out.print("Writing amount of rows: ");
     	System.out.println(combinations.size());
-    	if (combinations == null || combinations.isEmpty()) {
-            throw new IllegalArgumentException("The list of data is empty or null.");
-        }
+//    	if (combinations == null || combinations.isEmpty()) {
+//            throw new IllegalArgumentException("The list of data is empty or null.");
+//        }
     	
 	    File resultsDir = new File("../Parameter Generator/" + Configurations.RESULTS_DIRECTORY);
 	    if (!resultsDir.exists()) {
 	        resultsDir.mkdirs(); 
 	    }
 
-	    File outputFile = new File(resultsDir, fileName);
+	    File outputFile = new File(resultsDir, fileName + "." + Configurations.FILE_EXTENSION);
+
     	
         try (CSVWriter writer = (CSVWriter) new CSVWriterBuilder(new FileWriter(outputFile, false)) // false = overwrites resulting file
                 .withQuoteChar(CSVWriter.NO_QUOTE_CHARACTER)
@@ -83,26 +100,18 @@ public class Utilities {
         
     }
     
-    public static boolean nullSafeEquals(String str1, String str2)  {
-    	return str1!=null && str1.toLowerCase().trim().equals(str2);    	
-    }
-        
-    
+
 
     public static String removeSuffixFromKeys(String str) {
-    	String regex = Configurations.KEY_SUFFIX + "[0-9]+";
+    	String regex = Configurations.__KEY_SUFFIX + "[0-9]+";
     	return str.replaceAll(regex, "");
 
     }
     
     public static boolean isDouble(String string) {
-    	try {
-            Double.parseDouble(string);
-        }
-        catch (NumberFormatException e) {
-            return false;
-        }
-        return true;
+
+    	return string.charAt(string.length() - 1) != '0';
+
     }
 
 }

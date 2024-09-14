@@ -11,92 +11,58 @@ import com.google.gson.JsonObject;
 public class Combinations {
 
 
-    public static void generateCombinations(List<Map<String, Object>> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
+
+    public static void generateCombinations(List<Parameter> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
+    	
         if (index == parameters.size() || parameters.isEmpty()) {
-            if (!current.entrySet().isEmpty()) {
-                result.add(current.deepCopy());
-            }
+            result.add(current.deepCopy());
             return;
         }
         
-        String type = null;
-        String isRequired = null;
-
-        try {
-            Map<String, Object> parameter = parameters.get(index);
-            type = (String) parameter.get("type");
-            isRequired = (String) parameter.get("required");
-            type = type.toLowerCase();
-
+        Parameter parameter = parameters.get(index);
+    	
+        if (parameter.isEmpty()) {
+            result.add(current.deepCopy());
+            return;        	
         }
-        catch (NullPointerException e) {
-        	System.out.println(String.format("Incorrect parameter: %s", parameters.toString()));
-        	throw new IllegalArgumentException("The parameter is missing a part (key, type, possibleValues, etc.)");
-        	
+
+    	String type = parameter.getType();
+    	Boolean isRequired = parameter.getRequired() == null ? false : parameter.getRequired();
+        
+    	String policy = parameter.getPolicy()
+        						 .toLowerCase();
+
+
+        if (type.equalsIgnoreCase("nestedjson")) {
+        	NestedJsonCombinations.handleNestedJsonType(parameters, current, index, result);
+			return;
         }
-        	
-        type = type.toLowerCase();
-        switch (type) {
-            case "date":
-     
-                handleDateType(parameters, current, index, result);
-                break;
+        
+        switch (policy) {
             case "multivalue":
-                handleArrayType(parameters, current, index, result);
-                break;
-            case "nestedjson":
-                NestedJsonCombinations.handleNestedJsonType(parameters, current, index, result);
+                handleMultiValueType(parameters, current, index, result);
+
                 break;
             case "singlevalue":
                 handleSingleValueType(parameters, current, index, result);
                 break;
         }
 
-        if (!"true".equalsIgnoreCase(isRequired)) {
+
+        
+        if (!isRequired) {
+
             generateCombinations(parameters, current, index + 1, result);
         }
     }
 
-    private static void handleDateType(List<Map<String, Object>> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
-    	Map<String, Object> parameter = parameters.get(index);
-    	List<String> possibleValues = (List<String>) parameter.get("possibleValues");
-        
-        String startDateKey = null;
-        String endDateKey = null;
-        
-        if (parameter.get("key") instanceof List) {
-        	List<String> keys = (List<String>) parameter.get("key");
-        	startDateKey = keys.get(0);
-            endDateKey = keys.get(1);
-            
-            for (String dateFrom : possibleValues) {
-                for (String dateTo : possibleValues) {
-                    Date startDate = Configurations.DATE_PARSER.parse(dateFrom);
-                    Date endDate = Configurations.DATE_PARSER.parse(dateTo);
 
-                    if (startDate.before(endDate)) {
-
-    		            	current.addProperty(startDateKey, dateFrom);
-    		                current.addProperty(endDateKey, dateTo);
-    		                generateCombinations(parameters, current, index + 1, result);
-    		                current.remove(startDateKey);
-    		                current.remove(endDateKey);
-                        }
-                    }
-                }
-        }
-        else {
-        	handleSingleValueType(parameters, current, index, result);
-        }
-        
-    }
-    
-
-    private static void handleArrayType(List<Map<String, Object>> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
+    private static void handleMultiValueType(List<Parameter> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
         // Generates combinations for multi-valued parameters
-    	Map<String, Object> parameter = parameters.get(index);
-    	List<Object> possibleValues = (List<Object>) parameter.get("possibleValues");
-        String key = (String) parameter.get("key");
+    	Parameter parameter = parameters.get(index);
+    	List<Object> possibleValues = (List<Object>) parameter.getPossibleValues();
+        String key = (String) parameter.getKey();
+
         for (int i = 0; i < (1 << possibleValues.size()); i++) {
             JsonArray combination = new JsonArray();
             for (int j = 0; j < possibleValues.size(); j++) {
@@ -123,24 +89,63 @@ public class Combinations {
             }
         }
     }
-    
-    private static void handleSingleValueType(List<Map<String, Object>> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
-        // Generates combinations for single-valued parameters
-    	Map<String, Object> parameter = parameters.get(index);
-    	List<Object> possibleValues = (List<Object>) parameter.get("possibleValues");
-        String key = (String) parameter.get("key");
 
+
+
+    private static void handleSingleValueType(List<Parameter> parameters, JsonObject current, int index, List<JsonObject> result) throws ParseException {
+        // Generates combinations for single-valued parameters
+    	Parameter parameter = parameters.get(index);
+    	List<Object> possibleValues = parameter.getPossibleValues();
+    	
+        String type = parameter.getType();
+		
         for (Object value : possibleValues) {
-            if (Utilities.isDouble(value.toString())) {
-                current.addProperty(key, Integer.parseInt((String) value));
+            if ((parameter.getKey() instanceof String)) {
+    	        String key = (String) parameter.getKey();
+            	if (type.equalsIgnoreCase("numeric")) {
+            		Double valueNumeric = (Double) value;
+            		if (Utilities.isDouble(value.toString())) {
+	 					current.addProperty(key, valueNumeric);
+	 				 }
+	 				 else {
+	 					current.addProperty(key, valueNumeric.intValue());
+	 				 }
+            	}
+            	else if (type.equalsIgnoreCase("string") || type.equalsIgnoreCase("date")) {
+ 					current.addProperty(key, (String) value);            		
+            	}
+            	
+            	else if (type.equalsIgnoreCase("boolean")) {
+ 					current.addProperty(key, (Boolean) value);            		
+            	}
+            	
+                generateCombinations(parameters, current, index + 1, result);
+                current.remove(key);
             } else {
-                current.addProperty(key, value.toString());
+        		List<String> keys = (List<String>) parameter.getKey();
+            	String startDateKey = keys.get(0);
+            	String endDateKey = keys.get(1);
+                
+            	for (Object dateToObj : possibleValues) {
+                	String dateFrom = (String) value;
+            		String dateTo = (String) dateToObj;
+                    Date startDate = Configurations.DATE_PARSER.parse(dateFrom);
+                    Date endDate = Configurations.DATE_PARSER.parse(dateTo);
+
+                    if (startDate.before(endDate)) {
+
+		            	current.addProperty(startDateKey, dateFrom);
+		                current.addProperty(endDateKey, dateTo);
+		                generateCombinations(parameters, current, index + 1, result);
+		                current.remove(startDateKey);
+		                current.remove(endDateKey);
+                    }
+                }
             }
-            generateCombinations(parameters, current, index + 1, result);
-            current.remove(key);
-        }
+    	}
     }
 
-    
+        
+
 
 }
